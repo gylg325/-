@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选择明日方舟服务器</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #f5f5f5; }
+        h2 { color: #333; margin-bottom: 10px; }
+        p { color: #666; font-size: 0.9em; margin-bottom: 30px; }
+        .btn { display: block; width: 80%; max-width: 300px; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; text-align: center; text-decoration: none; }
+        #btn-guanfu { background-color: #2c3e50; }
+        #btn-bfu { background-color: #e74c3c; }
+        .status { margin-top: 20px; font-size: 0.85em; color: #999; }
+    </style>
+</head>
+<body>
+    <h2>请选择你的服务器</h2>
+    <p>点击按钮尝试打开对应的《明日方舟》客户端</p>
+
+    <button class="btn" id="btn-guanfu" onclick="tryLaunch('guanfu')">打开 官服</button>
+    <button class="btn" id="btn-bfu" onclick="tryLaunch('bfu')">打开 B服</button>
+
+    <div class="status" id="status-text"></div>
+
+    <script>
+        // 官方包名
+        const PACKAGES = {
+            guanfu: 'com.hypergryph.arknights',
+            bfu: 'com.hypergryph.arknights.bilibili'
+        };
+
+        let checkTimer = null;
+
+        function tryLaunch(serverType) {
+            const pkg = PACKAGES[serverType];
+            const statusEl = document.getElementById('status-text');
+            
+            // 构造 Android Intent 链接
+            // scheme=arknights 只是一个占位标识，系统主要依靠 package 来精确匹配
+            const intentUrl = `intent://launch#Intent;scheme=arknights;package=${pkg};end`;
+
+            statusEl.innerText = `正在尝试打开 ${serverType === 'guanfu' ? '官服' : 'B服'}...`;
+
+            // 清除之前的定时器
+            if (checkTimer) clearTimeout(checkTimer);
+
+            // 通过 iframe 尝试唤起应用（比直接跳转更稳定，不会污染浏览器历史）
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            iframe.src = intentUrl;
+
+            // 设置一个 2 秒的定时器
+            // 如果 2 秒后页面依然可见，说明很可能没有安装对应应用
+            checkTimer = setTimeout(() => {
+                document.body.removeChild(iframe);
+                // 检测页面是否仍然可见（如果应用被成功唤起，页面会进入后台）
+                if (!document.hidden) {
+                    statusEl.innerText = `似乎没有检测到${serverType === 'guanfu' ? '官服' : 'B服'}客户端，请确认安装或前往下载。`;
+                } else {
+                    statusEl.innerText = `已尝试唤起应用。`;
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
